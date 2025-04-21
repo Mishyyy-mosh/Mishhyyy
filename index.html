@@ -2,34 +2,87 @@
 <head>
   <meta charset="UTF-8">
   <title>Photo Booth App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <style>
-    video, canvas, img {
-      border: 2px solid #ccc;
-      margin: 10px;
-      max-width: 100%;
-    }
-    .filters button, .controls button {
-      margin: 5px;
-    }
-    #stickers img {
-      width: 50px;
-      cursor: grab;
-    }
-    .frame {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-    #canvasWrapper {
-      position: relative;
-      display: inline-block;
-    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 20px;
+    }h1 {
+  font-family: 'Orbitron', sans-serif;
+  color: #444;
+}
+
+video, canvas {
+  border-radius: 10px;
+  margin: 10px;
+  max-width: 90%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.filters button, .controls button {
+  margin: 8px;
+  padding: 10px 20px;
+  background: #6200ea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-weight: bold;
+}
+
+.filters button:hover, .controls button:hover {
+  background: #3700b3;
+}
+
+#stickers img {
+  width: 60px;
+  cursor: grab;
+  margin: 5px;
+  transition: transform 0.2s;
+}
+
+#stickers img:hover {
+  transform: scale(1.2);
+}
+
+.frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+#canvasWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+#countdown {
+  font-size: 80px;
+  font-family: 'Orbitron', sans-serif;
+  color: #e91e63;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  display: none;
+}
+
+#photos img {
+  max-width: 200px;
+  margin: 10px;
+  border-radius: 8px;
+}
+
   </style>
 </head>
 <body>
-  <h1>Photo Booth Web App</h1>
-  <video id="video" autoplay playsinline width="640" height="480"></video>
+  <h1>Photo Booth Web App</h1>  <div id="countdown">3</div><video id="video" autoplay playsinline width="640" height="480"></video>
+
   <div class="controls">
     <button onclick="startCountdown()">Take Photo</button>
     <button onclick="downloadImage()">Download</button>
@@ -43,13 +96,14 @@
     <canvas id="canvas" width="640" height="480"></canvas>
     <img src="frame.png" class="frame" width="640" height="480">
   </div>  <div id="stickers">
-    <p>Drag a sticker onto the canvas:</p>
+    <p><strong>Drag a sticker onto the canvas:</strong></p>
     <img src="hat.png" draggable="true" ondragstart="drag(event)">
     <img src="glasses.png" draggable="true" ondragstart="drag(event)">
   </div>  <div id="photos"></div>  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>  <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const countdownEl = document.getElementById('countdown');
     let filter = 'none';
     let shots = [];
 
@@ -64,13 +118,18 @@
 
     function startCountdown() {
       let count = 3;
+      countdownEl.style.display = 'block';
+      countdownEl.textContent = count;
+
       const interval = setInterval(() => {
-        if (count === 0) {
+        count--;
+        if (count >= 0) {
+          countdownEl.textContent = count;
+        }
+        if (count < 0) {
           clearInterval(interval);
+          countdownEl.style.display = 'none';
           takePhoto();
-        } else {
-          alert(count);
-          count--;
         }
       }, 1000);
     }
