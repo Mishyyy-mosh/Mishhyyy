@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Booth App</title>
+  <style>
+    video, canvas, img {
+      border: 2px solid #ccc;
+      margin: 10px;
+      max-width: 100%;
+    }
+    .filters button, .controls button {
+      margin: 5px;
+    }
+    #stickers img {
+      width: 50px;
+      cursor: grab;
+    }
+    .frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    #canvasWrapper {
+      position: relative;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Photo Booth Web App</h1>
+  <video id="video" autoplay playsinline width="640" height="480"></video>
+  <div class="controls">
+    <button onclick="startCountdown()">Take Photo</button>
+    <button onclick="downloadImage()">Download</button>
+    <button onclick="makeGIF()">Create GIF</button>
+  </div>  <div class="filters">
+    <button onclick="setFilter('none')">Normal</button>
+    <button onclick="setFilter('grayscale(100%)')">Grayscale</button>
+    <button onclick="setFilter('sepia(100%)')">Sepia</button>
+    <button onclick="setFilter('blur(4px)')">Blur</button>
+  </div>  <div id="canvasWrapper">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <img src="frame.png" class="frame" width="640" height="480">
+  </div>  <div id="stickers">
+    <p>Drag a sticker onto the canvas:</p>
+    <img src="hat.png" draggable="true" ondragstart="drag(event)">
+    <img src="glasses.png" draggable="true" ondragstart="drag(event)">
+  </div>  <div id="photos"></div>  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let filter = 'none';
+    let shots = [];
+
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+    });
+
+    function setFilter(f) {
+      filter = f;
+      video.style.filter = f;
+    }
+
+    function startCountdown() {
+      let count = 3;
+      const interval = setInterval(() => {
+        if (count === 0) {
+          clearInterval(interval);
+          takePhoto();
+        } else {
+          alert(count);
+          count--;
+        }
+      }, 1000);
+    }
+
+    function takePhoto() {
+      ctx.filter = filter;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imgData = canvas.toDataURL('image/png');
+      shots.push(imgData);
+    }
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.download = 'photo.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    function makeGIF() {
+      const gif = new GIF({ workers: 2, quality: 10 });
+      shots.forEach(data => {
+        const img = new Image();
+        img.src = data;
+        gif.addFrame(img, { delay: 500 });
+      });
+      gif.on('finished', function(blob) {
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.src = url;
+        document.getElementById('photos').appendChild(img);
+      });
+      gif.render();
+    }
+
+    function drag(ev) {
+      ev.dataTransfer.setData("text", ev.target.src);
+    }
+
+    canvas.addEventListener("dragover", (e) => e.preventDefault());
+    canvas.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const src = e.dataTransfer.getData("text");
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        const x = e.offsetX - img.width / 2;
+        const y = e.offsetY - img.height / 2;
+        ctx.drawImage(img, x, y, img.width, img.height);
+      };
+    });
+  </script></body>
+</html>
